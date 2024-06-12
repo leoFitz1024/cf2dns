@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: 
-      - master
+      - leoFitz1024-patch-1
   schedule:
     - cron: '*/15 * * * *'
 
