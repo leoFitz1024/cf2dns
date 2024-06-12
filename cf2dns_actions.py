@@ -5,6 +5,7 @@ import json
 import requests
 import os
 import traceback
+from collections import defaultdict
 from dns.qCloud import QcloudApiv3 # QcloudApiv3 DNSPod 的 API 更新了 github@z0z0r4
 from dns.aliyun import AliApi
 from dns.huawei import HuaWeiApi
@@ -42,6 +43,31 @@ def get_optimization_ip():
         response = requests.post('https://api.hostmonit.com/get_optimization_ip', json=data, headers=headers)
         if response.status_code == 200:
             return response.json()
+        else:
+            print("CHANGE OPTIMIZATION IP ERROR: REQUEST STATUS CODE IS NOT 200")
+            return None
+    except Exception as e:
+        print("CHANGE OPTIMIZATION IP ERROR: " + str(e))
+        return None
+
+def get_optimization_ip2():
+    try:
+        headers = headers = {'Content-Type': 'application/json'}
+        data = {"key": KEY, "type": "v4" if RECORD_TYPE == "A" else "v6"}
+        response = requests.post('https://api.hostmonit.com/get_optimization_ip', json=data, headers=headers)
+        if response.status_code == 200:
+            response_date = response.json()
+            cdn_list = response_date['info']
+            grouped_data = defaultdict(list)
+            for item in cdn_list:
+                grouped_data[item['line']].append(item)
+
+            for key, value in grouped_data.items():
+                grouped_data[key] = sorted(value, key=lambda x: (x['latency'], -x['speed']))
+            return {
+                "code": response_date['code'],
+                "info": grouped_data
+            }
         else:
             print("CHANGE OPTIMIZATION IP ERROR: REQUEST STATUS CODE IS NOT 200")
             return None
@@ -102,7 +128,7 @@ def main(cloud):
     global AFFECT_NUM, RECORD_TYPE
     if len(DOMAINS) > 0:
         try:
-            cfips = get_optimization_ip()
+            cfips = get_optimization_ip2()
             if cfips == None or cfips["code"] != 200:
                 print("GET CLOUDFLARE IP ERROR: ----Time: " + str(time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())) )
                 return
