@@ -1,6 +1,7 @@
 name: 'GitHub Actions CloudFlare2DNSPod Bot'
 
 on:
+  workflow_dispatch:
   push:
     branches: 
       - master
